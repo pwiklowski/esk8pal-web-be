@@ -54,4 +54,4 @@ app.use(function (req, res, next) {
 
   console.log("started");
   app.listen(8080);
-}
+})();
