@@ -1,6 +1,7 @@
 import express = require("express");
 import dotenv from "dotenv";
 import * as mongo from "mongodb";
+import Ride from "./ride";
 
 const fileUpload = require("express-fileupload");
 
@@ -69,8 +70,31 @@ app.use(passport.initialize());
   );
 
   app.get("/rides", passport.authenticate("bearer", { session: false }), async (req: express.Request, res: express.Response) => {
-    const allRides = await rides.find({}).toArray();
+    const allRides = await rides
+      .find({})
+      .project({
+        _id: true,
+        name: true,
+      })
+      .toArray();
     res.json(allRides);
+  });
+
+  app.post("/rides", passport.authenticate("bearer", { session: false }), async (req: express.Request, res: express.Response) => {
+    console.log(req.files.logfile);
+
+    const ride: Ride = {
+      name: req.files.logfile.name,
+      file: new mongo.Binary(req.files.logfile.data),
+    };
+
+    const response = await rides.insertOne(ride);
+    if (response.result.ok === 1) {
+      res.json(response.ops[0]);
+      return;
+    }
+    res.statusCode = 500;
+    res.json(null);
   });
 
   app.post("/convert", async (req: express.Request, res: express.Response) => {
