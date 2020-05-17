@@ -80,6 +80,16 @@ app.use(passport.initialize());
     res.json(allRides);
   });
 
+  app.get("/rides/:id", passport.authenticate("bearer", { session: false }), async (req: express.Request, res: express.Response) => {
+    const rideId = req.params.id;
+    const ride = (await rides.findOne({ _id: new mongo.ObjectID(rideId) })) as Ride;
+    if (ride) {
+      res.json(ride);
+    } else {
+      res.sendStatus(404);
+    }
+  });
+
   app.post("/rides", passport.authenticate("bearer", { session: false }), async (req: express.Request, res: express.Response) => {
     console.log(req.files.logfile);
 
