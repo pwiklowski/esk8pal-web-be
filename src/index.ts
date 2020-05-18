@@ -2,6 +2,7 @@ import express = require("express");
 import dotenv from "dotenv";
 import * as mongo from "mongodb";
 import Ride from "./ride";
+import { GridFSBucket, GridFSBucketWriteStream } from "mongodb";
 
 const fileUpload = require("express-fileupload");
 
@@ -51,6 +52,8 @@ app.use(passport.initialize());
   const rides = db.collection("rides");
   const users = db.collection("users");
 
+  let gridfsBucket = new GridFSBucket(db, { bucketName: "esk8pal" });
+
   passport.use(
     new BearerStrategy(async (token: string, done: Function) => {
       try {
@@ -90,12 +93,40 @@ app.use(passport.initialize());
     }
   });
 
+  app.get("/rides/:id/data", passport.authenticate("bearer", { session: false }), async (req: express.Request, res: express.Response) => {
+    const rideId = req.params.id;
+    const ride = (await rides.findOne({ _id: new mongo.ObjectID(rideId) })) as Ride;
+    if (ride) {
+      gridfsBucket.openDownloadStream(ride.fileId).pipe(res);
+    } else {
+      res.sendStatus(404);
+    }
+  });
+
   app.post("/rides", passport.authenticate("bearer", { session: false }), async (req: express.Request, res: express.Response) => {
-    console.log(req.files.logfile);
+    const rideId = new mongo.ObjectID();
+
+    const upload = () => {
+      return new Promise((resolve, reject) => {
+        const writestream: GridFSBucketWriteStream = gridfsBucket.openUploadStream(`log_${rideId}.gpx`);
+
+        writestream.on("finish", () => {
+          resolve(writestream.id);
+        });
+        writestream.on("error", (err) => {
+          reject();
+        });
+        writestream.write(req.files.logfile.data);
+        writestream.end();
+      });
+    };
+
+    const fileId = await upload();
 
     const ride: Ride = {
+      _id: rideId,
       name: req.files.logfile.name,
-      file: new mongo.Binary(req.files.logfile.data),
+      fileId: fileId,
     };
 
     const response = await rides.insertOne(ride);
@@ -103,6 +134,9 @@ app.use(passport.initialize());
       res.json(response.ops[0]);
       return;
     }
+
+    //TODO remove file if inserting failed
+
     res.statusCode = 500;
     res.json(null);
   });
