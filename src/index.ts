@@ -14,10 +14,10 @@ dotenv.config();
 const { OAuth2Client } = require("google-auth-library");
 const oAuth2Client = new OAuth2Client(process.env.CLIENT_ID);
 
-const { buildGPX, GarminBuilder } = require("gpx-builder");
+const { buildGPX, Esk8palBuilder } = require("gpx-builder");
 const parse = require("csv-parse/lib/sync");
-const { Point } = GarminBuilder.MODELS;
-const gpxData = new GarminBuilder();
+const { Point } = Esk8palBuilder.MODELS;
+const gpxData = new Esk8palBuilder();
 
 const app: express.Application = express();
 
@@ -150,7 +150,12 @@ app.use(passport.initialize());
     const points = records.map((rec: any) => {
       return new Point(rec.latitude, rec.longitude, {
         time: new Date(parseInt(rec.timestamp) * 1000),
+        ele: rec.altitude,
         speed: rec.speed,
+        voltage: rec.voltage,
+        current: rec.current,
+        used_energy: rec.used_energy,
+        trip_distance: rec.trip_distance,
       });
     });
 

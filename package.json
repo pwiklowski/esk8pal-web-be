@@ -15,7 +15,7 @@
     "express": "^4.17.1",
     "express-fileupload": "^1.1.7-alpha.3",
     "google-auth-library": "^6.0.0",
-    "gpx-builder": "https://github.com/pwiklowski/gpx-builder",
+    "gpx-builder": "git+https://github.com/pwiklowski/gpx-builder.git",
     "mongodb": "^3.5.7",
     "passport": "^0.4.1",
     "passport-http-bearer": "^1.0.1"
