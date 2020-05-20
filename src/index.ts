@@ -54,6 +54,67 @@ app.use(passport.initialize());
 
   let gridfsBucket = new GridFSBucket(db, { bucketName: "esk8pal" });
 
+  const generateGpx = (data: string) => {
+    const records = parse(data, {
+      columns: true,
+      from_line: 1,
+    });
+
+    const points = records.map((rec: any) => {
+      return new Point(rec.latitude, rec.longitude, {
+        time: new Date(parseInt(rec.timestamp) * 1000),
+        ele: rec.altitude,
+        speed: rec.speed,
+        voltage: rec.voltage,
+        current: rec.current,
+        used_energy: rec.used_energy,
+        trip_distance: rec.trip_distance,
+      });
+    });
+
+    gpxData.setSegmentPoints(points);
+
+    return buildGPX(gpxData.toObject());
+  };
+
+  const uploadDataToGridFs = (data: string, rideId: string) => {
+    return new Promise((resolve, reject) => {
+      const writestream: GridFSBucketWriteStream = gridfsBucket.openUploadStream(`log_${rideId}.gpx`);
+
+      writestream.on("finish", () => {
+        resolve(writestream.id);
+      });
+      writestream.on("error", () => {
+        reject();
+      });
+      writestream.write(data);
+      writestream.end();
+    });
+  };
+
+  const createRideLog = async (req: express.Request, res: express.Response, data: string) => {
+    const rideId = new mongo.ObjectID();
+
+    const fileId = await uploadDataToGridFs(data, rideId);
+
+    const ride: Ride = {
+      _id: rideId,
+      name: req.files.logfile.name,
+      fileId: fileId,
+    };
+
+    const response = await rides.insertOne(ride);
+    if (response.result.ok === 1) {
+      res.json(response.ops[0]);
+      return;
+    }
+
+    //TODO remove file if inserting failed
+
+    res.statusCode = 500;
+    res.json(null);
+  };
+
   passport.use(
     new BearerStrategy(async (token: string, done: Function) => {
       try {
@@ -103,66 +164,20 @@ app.use(passport.initialize());
     }
   });
 
-  app.post("/rides", passport.authenticate("bearer", { session: false }), async (req: express.Request, res: express.Response) => {
-    const rideId = new mongo.ObjectID();
+  app.post("/csv", passport.authenticate("bearer", { session: false }), async (req: express.Request, res: express.Response) => {
+    const gpx = generateGpx((req as any).files.logfile.data);
+    await createRideLog(req, res, gpx);
+  });
 
-    const upload = () => {
-      return new Promise((resolve, reject) => {
-        const writestream: GridFSBucketWriteStream = gridfsBucket.openUploadStream(`log_${rideId}.gpx`);
-
-        writestream.on("finish", () => {
-          resolve(writestream.id);
-        });
-        writestream.on("error", (err) => {
-          reject();
-        });
-        writestream.write(req.files.logfile.data);
-        writestream.end();
-      });
-    };
-
-    const fileId = await upload();
-
-    const ride: Ride = {
-      _id: rideId,
-      name: req.files.logfile.name,
-      fileId: fileId,
-    };
-
-    const response = await rides.insertOne(ride);
-    if (response.result.ok === 1) {
-      res.json(response.ops[0]);
-      return;
-    }
-
-    //TODO remove file if inserting failed
-
-    res.statusCode = 500;
-    res.json(null);
+  app.post("/gpx", passport.authenticate("bearer", { session: false }), async (req: express.Request, res: express.Response) => {
+    await createRideLog(req, res, req.files.logfile.data);
   });
 
   app.post("/convert", async (req: express.Request, res: express.Response) => {
-    const records = parse((req as any).files.file.data, {
-      columns: true,
-      from_line: 1,
-    });
-
-    const points = records.map((rec: any) => {
-      return new Point(rec.latitude, rec.longitude, {
-        time: new Date(parseInt(rec.timestamp) * 1000),
-        ele: rec.altitude,
-        speed: rec.speed,
-        voltage: rec.voltage,
-        current: rec.current,
-        used_energy: rec.used_energy,
-        trip_distance: rec.trip_distance,
-      });
-    });
-
-    gpxData.setSegmentPoints(points);
+    const gpx = generateGpx((req as any).files.file.data);
 
     res.statusCode = 200;
-    res.send(buildGPX(gpxData.toObject()));
+    res.send(gpx);
   });
 
   console.log("started");
