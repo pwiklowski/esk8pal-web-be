@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import * as mongo from "mongodb";
 import Ride from "./ride";
 import { GridFSBucket, GridFSBucketWriteStream } from "mongodb";
+import { parseGpx } from "./gpxParser";
 
 const fileUpload = require("express-fileupload");
 
@@ -18,6 +19,8 @@ const { buildGPX, Esk8palBuilder } = require("gpx-builder");
 const parse = require("csv-parse/lib/sync");
 const { Point } = Esk8palBuilder.MODELS;
 const gpxData = new Esk8palBuilder();
+
+const streamToString = require("stream-to-string");
 
 const app: express.Application = express();
 
@@ -149,6 +152,18 @@ app.use(passport.initialize());
     const ride = (await rides.findOne({ _id: new mongo.ObjectID(rideId) })) as Ride;
     if (ride) {
       res.json(ride);
+    } else {
+      res.sendStatus(404);
+    }
+  });
+
+  app.get("/rides/:id/meta", passport.authenticate("bearer", { session: false }), async (req: express.Request, res: express.Response) => {
+    const rideId = req.params.id;
+    const ride = (await rides.findOne({ _id: new mongo.ObjectID(rideId) })) as Ride;
+    if (ride) {
+      const data = await streamToString(gridfsBucket.openDownloadStream(ride.fileId));
+      const parsedData = await parseGpx(data);
+      res.send(parsedData);
     } else {
       res.sendStatus(404);
     }
