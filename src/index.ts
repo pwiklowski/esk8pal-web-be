@@ -80,6 +80,37 @@ app.use(passport.initialize());
     return buildGPX(gpxData.toObject());
   };
 
+  const generateMetadata = (data) => {
+    const points = data.trk[0].trkseg[0].trkpt;
+
+    const len = points.length;
+
+    const start = points[0];
+    const end = points[len - 1];
+
+    let maxSpped = 0;
+    let maxCurrent = 0;
+
+    points.map((point) => {
+      const current = point.extensions[0]["esk8pal:TrackPointExtension"][0]["esk8pal:current"][0];
+      const speed = point.extensions[0]["esk8pal:TrackPointExtension"][0]["esk8pal:speed"];
+      if (current > maxCurrent) {
+        maxCurrent = current;
+      }
+      if (speed > maxSpped) {
+        maxSpped = speed;
+      }
+    });
+
+    return {
+      tripTime: new Date(end.time).getTime() - new Date(start.time[0]).getTime(),
+      tripDistance: end.extensions[0]["esk8pal:TrackPointExtension"][0]["esk8pal:trip_distance"][0],
+      tripUsagedEnergy: end.extensions[0]["esk8pal:TrackPointExtension"][0]["esk8pal:used_energy"][0],
+      maxSpped,
+      maxCurrent,
+    };
+  };
+
   const uploadDataToGridFs = (data: string, rideId: string) => {
     return new Promise((resolve, reject) => {
       const writestream: GridFSBucketWriteStream = gridfsBucket.openUploadStream(`log_${rideId}.gpx`);
@@ -163,7 +194,11 @@ app.use(passport.initialize());
     if (ride) {
       const data = await streamToString(gridfsBucket.openDownloadStream(ride.fileId));
       const parsedData = await parseGpx(data);
-      res.send(parsedData);
+
+      const metadata = generateMetadata(parsedData);
+
+      res.statusCode = 200;
+      res.send(metadata);
     } else {
       res.sendStatus(404);
     }
