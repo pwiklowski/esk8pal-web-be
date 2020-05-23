@@ -108,12 +108,12 @@ app.use(passport.initialize());
 
     const extension = end?.extensions[0]?.["esk8pal:TrackPointExtension"]?.[0];
     const tripDistance = extension?.["esk8pal:trip_distance"]?.[0];
-    const tripUsagedEnergy = extension?.["esk8pal:used_energy"]?.[0];
+    const tripUsedEnergy = extension?.["esk8pal:used_energy"]?.[0];
 
     return {
       tripTime,
       tripDistance,
-      tripUsagedEnergy,
+      tripUsedEnergy,
       maxSpped,
       maxCurrent,
     };

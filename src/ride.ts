@@ -10,7 +10,7 @@ export default interface Ride {
 export interface MetaData {
   tripTime: number;
   tripDistance: number;
-  tripUsagedEnergy: number;
+  tripUsedEnergy: number;
   maxSpped: number;
   maxCurrent: number;
 }
