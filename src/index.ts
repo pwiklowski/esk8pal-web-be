@@ -1,8 +1,8 @@
 import express = require("express");
 import dotenv from "dotenv";
 import * as mongo from "mongodb";
-import Ride from "./ride";
-import { GridFSBucket, GridFSBucketWriteStream } from "mongodb";
+import Ride, { MetaData } from "./ride";
+import { GridFSBucket, GridFSBucketWriteStream, ObjectId } from "mongodb";
 import { parseGpx } from "./gpxParser";
 
 const fileUpload = require("express-fileupload");
@@ -80,7 +80,7 @@ app.use(passport.initialize());
     return buildGPX(gpxData.toObject());
   };
 
-  const generateMetadata = (data) => {
+  const generateMetadata = (data): MetaData => {
     const points = data.trk[0].trkseg[0].trkpt;
 
     const len = points.length;
@@ -102,21 +102,25 @@ app.use(passport.initialize());
       }
     });
 
+    const tripTime = new Date(end.time).getTime() - new Date(start.time[0]).getTime();
+    const tripDistance = end.extensions[0]["esk8pal:TrackPointExtension"][0]["esk8pal:trip_distance"][0];
+    const tripUsagedEnergy = end.extensions[0]["esk8pal:TrackPointExtension"][0]["esk8pal:used_energy"][0];
+
     return {
-      tripTime: new Date(end.time).getTime() - new Date(start.time[0]).getTime(),
-      tripDistance: end.extensions[0]["esk8pal:TrackPointExtension"][0]["esk8pal:trip_distance"][0],
-      tripUsagedEnergy: end.extensions[0]["esk8pal:TrackPointExtension"][0]["esk8pal:used_energy"][0],
+      tripTime,
+      tripDistance,
+      tripUsagedEnergy,
       maxSpped,
       maxCurrent,
     };
   };
 
-  const uploadDataToGridFs = (data: string, rideId: string) => {
+  const uploadDataToGridFs = (data: string, rideId: ObjectId): Promise<ObjectId> => {
     return new Promise((resolve, reject) => {
       const writestream: GridFSBucketWriteStream = gridfsBucket.openUploadStream(`log_${rideId}.gpx`);
 
       writestream.on("finish", () => {
-        resolve(writestream.id);
+        resolve(writestream.id as ObjectId);
       });
       writestream.on("error", () => {
         reject();
