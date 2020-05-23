@@ -129,12 +129,15 @@ app.use(passport.initialize());
   const createRideLog = async (req: express.Request, res: express.Response, data: string) => {
     const rideId = new mongo.ObjectID();
 
+    const metaData = generateMetadata(await parseGpx(data));
+
     const fileId = await uploadDataToGridFs(data, rideId);
 
     const ride: Ride = {
       _id: rideId,
-      name: req.files.logfile.name,
+      fileName: req.files.logfile.name,
       fileId: fileId,
+      metaData,
     };
 
     const response = await rides.insertOne(ride);
