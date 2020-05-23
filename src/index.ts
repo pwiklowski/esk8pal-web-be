@@ -92,19 +92,23 @@ app.use(passport.initialize());
     let maxCurrent = 0;
 
     points.map((point) => {
-      const current = point.extensions[0]["esk8pal:TrackPointExtension"][0]["esk8pal:current"][0];
-      const speed = point.extensions[0]["esk8pal:TrackPointExtension"][0]["esk8pal:speed"];
+      const extension = end?.extensions[0]?.["esk8pal:TrackPointExtension"]?.[0];
+      const current = extension?.["esk8pal:current"]?.[0];
       if (current > maxCurrent) {
         maxCurrent = current;
       }
+
+      const speed = extension?.["esk8pal:speed"]?.[0];
       if (speed > maxSpped) {
         maxSpped = speed;
       }
     });
 
     const tripTime = new Date(end.time).getTime() - new Date(start.time[0]).getTime();
-    const tripDistance = end.extensions[0]["esk8pal:TrackPointExtension"][0]["esk8pal:trip_distance"][0];
-    const tripUsagedEnergy = end.extensions[0]["esk8pal:TrackPointExtension"][0]["esk8pal:used_energy"][0];
+
+    const extension = end?.extensions[0]?.["esk8pal:TrackPointExtension"]?.[0];
+    const tripDistance = extension?.["esk8pal:trip_distance"]?.[0];
+    const tripUsagedEnergy = extension?.["esk8pal:used_energy"]?.[0];
 
     return {
       tripTime,
