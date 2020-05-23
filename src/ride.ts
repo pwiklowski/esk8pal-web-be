@@ -8,6 +8,7 @@ export default interface Ride {
 }
 
 export interface MetaData {
+  start: number;
   tripTime: number;
   tripDistance: number;
   tripUsedEnergy: number;

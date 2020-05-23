@@ -111,6 +111,7 @@ app.use(passport.initialize());
     const tripUsedEnergy = extension?.["esk8pal:used_energy"]?.[0];
 
     return {
+      start: start.time[0],
       tripTime,
       tripDistance,
       tripUsedEnergy,
