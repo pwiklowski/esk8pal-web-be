@@ -183,7 +183,8 @@ app.use(passport.initialize());
       .find({})
       .project({
         _id: true,
-        name: true,
+        fileName: true,
+        metaData: true,
       })
       .toArray();
     res.json(allRides);
