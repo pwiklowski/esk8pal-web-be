@@ -144,6 +144,7 @@ app.use(passport.initialize());
 
     const ride: Ride = {
       _id: rideId,
+      ownerId: req.user.sub,
       fileName: req.files.logfile.name,
       fileId: fileId,
       metaData,
@@ -200,7 +201,7 @@ app.use(passport.initialize());
 
   app.get("/rides", passport.authenticate("bearer", { session: false }), async (req: express.Request, res: express.Response) => {
     const allRides = await rides
-      .find({})
+      .find({ ownerId: req.user.sub })
       .project({
         _id: true,
         fileName: true,
@@ -212,7 +213,7 @@ app.use(passport.initialize());
 
   app.get("/rides/:id", passport.authenticate("bearer", { session: false }), async (req: express.Request, res: express.Response) => {
     const rideId = req.params.id;
-    const ride = (await rides.findOne({ _id: new mongo.ObjectID(rideId) })) as Ride;
+    const ride = (await rides.findOne({ ownerId: req.user.sub, _id: new mongo.ObjectID(rideId) })) as Ride;
     if (ride) {
       res.json(ride);
     } else {
@@ -222,7 +223,7 @@ app.use(passport.initialize());
 
   app.get("/rides/:id/meta", passport.authenticate("bearer", { session: false }), async (req: express.Request, res: express.Response) => {
     const rideId = req.params.id;
-    const ride = (await rides.findOne({ _id: new mongo.ObjectID(rideId) })) as Ride;
+    const ride = (await rides.findOne({ ownerId: req.user.sub, _id: new mongo.ObjectID(rideId) })) as Ride;
     if (ride) {
       const data = await streamToString(gridfsBucket.openDownloadStream(ride.fileId));
       const parsedData = await parseGpx(data);
@@ -238,7 +239,7 @@ app.use(passport.initialize());
 
   app.get("/rides/:id/data", passport.authenticate("bearer", { session: false }), async (req: express.Request, res: express.Response) => {
     const rideId = req.params.id;
-    const ride = (await rides.findOne({ _id: new mongo.ObjectID(rideId) })) as Ride;
+    const ride = (await rides.findOne({ ownerId: req.user.sub, _id: new mongo.ObjectID(rideId) })) as Ride;
     if (ride) {
       gridfsBucket.openDownloadStream(ride.fileId).pipe(res);
     } else {

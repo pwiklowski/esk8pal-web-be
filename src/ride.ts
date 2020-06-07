@@ -1,6 +1,7 @@
 import { ObjectId } from "mongodb";
 
 export default interface Ride {
+  ownerId: string;
   fileId: ObjectId;
   fileName: string;
   _id: ObjectId;
