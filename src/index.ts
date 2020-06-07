@@ -5,6 +5,7 @@ import Ride, { MetaData } from "./ride";
 import { GridFSBucket, GridFSBucketWriteStream, ObjectId } from "mongodb";
 import { parseGpx } from "./gpxParser";
 
+const crypto = require("crypto");
 const fileUpload = require("express-fileupload");
 
 const passport = require("passport");
@@ -193,7 +194,7 @@ app.use(passport.initialize());
   });
 
   app.post("/devices", passport.authenticate("bearer", { session: false }), async (req: express.Request, res: express.Response) => {
-    const device = { name: req.body.name, key: req.body.key, _id: new mongo.ObjectID() };
+    const device = { name: req.body.name, key: crypto.randomBytes(20).toString("hex"), _id: new mongo.ObjectID() };
     await users.updateOne({ sub: req.user.sub }, { $push: { devices: device } });
     res.json(req.user.devices);
   });

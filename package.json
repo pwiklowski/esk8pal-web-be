@@ -11,6 +11,7 @@
   "license": "MIT",
   "dependencies": {
     "@types/mongodb": "^3.5.18",
+    "crypto": "^1.0.1",
     "csv-parse": "^4.8.9",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
