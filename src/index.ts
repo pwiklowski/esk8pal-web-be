@@ -196,7 +196,9 @@ app.use(passport.initialize());
   app.post("/devices", passport.authenticate("bearer", { session: false }), async (req: express.Request, res: express.Response) => {
     const device = { name: req.body.name, key: crypto.randomBytes(20).toString("hex"), _id: new mongo.ObjectID() };
     await users.updateOne({ sub: req.user.sub }, { $push: { devices: device } });
-    res.json(req.user.devices);
+
+    const user = await users.findOne({ sub: req.user.sub });
+    res.json(user.devices);
   });
 
   app.delete("/devices/:id", passport.authenticate("bearer", { session: false }), async (req: express.Request, res: express.Response) => {
