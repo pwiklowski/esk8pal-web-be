@@ -24,6 +24,13 @@ const streamToString = require("stream-to-string");
 
 const app: express.Application = express();
 
+declare module "express" {
+  export interface Request {
+    user: any;
+    files: any;
+  }
+}
+
 app.use(express.json());
 app.use(
   express.urlencoded({
@@ -248,7 +255,7 @@ app.use(passport.initialize());
   });
 
   app.post("/csv", passport.authenticate("bearer", { session: false }), async (req: express.Request, res: express.Response) => {
-    const gpx = generateGpx((req as any).files.logfile.data);
+    const gpx = generateGpx(req.files.logfile.data);
     await createRideLog(req, res, gpx);
   });
 
@@ -257,7 +264,7 @@ app.use(passport.initialize());
   });
 
   app.post("/convert", async (req: express.Request, res: express.Response) => {
-    const gpx = generateGpx((req as any).files.file.data);
+    const gpx = generateGpx(req.files.file.data);
 
     res.statusCode = 200;
     res.send(gpx);
