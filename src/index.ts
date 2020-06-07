@@ -179,6 +179,25 @@ app.use(passport.initialize());
     })
   );
 
+  app.get("/devices", passport.authenticate("bearer", { session: false }), async (req: express.Request, res: express.Response) => {
+    const user = await users.findOne({ sub: req.user.sub });
+    res.json(user.devices);
+  });
+
+  app.post("/devices", passport.authenticate("bearer", { session: false }), async (req: express.Request, res: express.Response) => {
+    const device = { name: req.body.name, key: req.body.key, _id: new mongo.ObjectID() };
+    await users.updateOne({ sub: req.user.sub }, { $push: { devices: device } });
+    res.json(req.user.devices);
+  });
+
+  app.delete("/devices/:id", passport.authenticate("bearer", { session: false }), async (req: express.Request, res: express.Response) => {
+    const deviceId = new mongo.ObjectID(req.params.id);
+    await users.updateOne({ sub: req.user.sub }, { $pull: { devices: { _id: deviceId } } });
+
+    const user = await users.findOne({ sub: req.user.sub });
+    res.json(user.devices);
+  });
+
   app.get("/rides", passport.authenticate("bearer", { session: false }), async (req: express.Request, res: express.Response) => {
     const allRides = await rides
       .find({})
