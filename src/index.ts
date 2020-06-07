@@ -170,7 +170,7 @@ app.use(passport.initialize());
         });
         const payload = ticket.getPayload();
 
-        users.updateOne({ sub: payload.sub }, { $set: payload }, { upsert: true });
+        await users.updateOne({ sub: payload.sub }, { $set: payload }, { upsert: true });
 
         return done(null, payload, { scope: "all" });
       } catch (err) {
