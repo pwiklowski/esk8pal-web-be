@@ -257,6 +257,21 @@ app.use(passport.initialize());
     }
   });
 
+  app.post("/upload", async (req: express.Request, res: express.Response) => {
+    const key = req.query.key;
+
+    if (key) {
+      const user = await users.findOne({ "devices.key": req.query.key });
+
+      req.user = user;
+
+      const gpx = generateGpx(req.files.logfile.data);
+      await createRideLog(req, res, gpx);
+    } else {
+      res.sendStatus(400);
+    }
+  });
+
   app.post("/csv", passport.authenticate("bearer", { session: false }), async (req: express.Request, res: express.Response) => {
     const gpx = generateGpx(req.files.logfile.data);
     await createRideLog(req, res, gpx);
