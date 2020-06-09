@@ -13,6 +13,6 @@ export interface MetaData {
   tripTime: number;
   tripDistance: number;
   tripUsedEnergy: number;
-  maxSpped: number;
+  maxSpeed: number;
   maxCurrent: number;
 }
