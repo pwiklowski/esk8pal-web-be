@@ -74,7 +74,7 @@ app.use(passport.initialize());
     const points = records.map((rec: any) => {
       return new Point(rec.latitude, rec.longitude, {
         time: new Date(parseInt(rec.timestamp) * 1000),
-        ele: rec.altitude,
+        altitude: rec.altitude,
         speed: rec.speed,
         voltage: rec.voltage,
         current: rec.current,
