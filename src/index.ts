@@ -100,13 +100,15 @@ app.use(passport.initialize());
     let maxCurrent = 0;
 
     points.map((point) => {
-      const extension = end?.extensions[0]?.["esk8pal:TrackPointExtension"]?.[0];
-      const current = extension?.["esk8pal:current"]?.[0];
+      const extension = point?.extensions[0]?.["esk8pal:TrackPointExtension"]?.[0];
+
+      const current = parseFloat(extension?.["esk8pal:current"]?.[0]);
+
       if (current > maxCurrent) {
         maxCurrent = current;
       }
 
-      const speed = extension?.["esk8pal:speed"]?.[0];
+      const speed = parseFloat(extension?.["esk8pal:speed"]?.[0]);
       if (speed > maxSpeed) {
         maxSpeed = speed;
       }
