@@ -96,7 +96,7 @@ app.use(passport.initialize());
     const start = points[0];
     const end = points[len - 1];
 
-    let maxSpped = 0;
+    let maxSpeed = 0;
     let maxCurrent = 0;
 
     points.map((point) => {
@@ -107,8 +107,8 @@ app.use(passport.initialize());
       }
 
       const speed = extension?.["esk8pal:speed"]?.[0];
-      if (speed > maxSpped) {
-        maxSpped = speed;
+      if (speed > maxSpeed) {
+        maxSpeed = speed;
       }
     });
 
@@ -123,7 +123,7 @@ app.use(passport.initialize());
       tripTime,
       tripDistance,
       tripUsedEnergy,
-      maxSpped,
+      maxSpeed,
       maxCurrent,
     };
   };
