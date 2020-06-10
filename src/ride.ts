@@ -15,4 +15,6 @@ export interface MetaData {
   tripUsedEnergy: number;
   maxSpeed: number;
   maxCurrent: number;
+  averageSpeed: number;
+  averageSpeedWhenMoving: number;
 }

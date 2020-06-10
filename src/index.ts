@@ -97,6 +97,9 @@ app.use(passport.initialize());
     const end = points[len - 1];
 
     let maxSpeed = 0;
+    let averageSpeed = 0;
+    let averageSpeedWhenMoving = 0;
+    let movingPoints = 0;
     let maxCurrent = 0;
 
     points.map((point) => {
@@ -112,7 +115,17 @@ app.use(passport.initialize());
       if (speed > maxSpeed) {
         maxSpeed = speed;
       }
+
+      if (speed > 1) {
+        averageSpeedWhenMoving += speed;
+        movingPoints++;
+      }
+
+      averageSpeed += speed;
     });
+
+    averageSpeed = averageSpeed / points.length;
+    averageSpeedWhenMoving = averageSpeedWhenMoving / movingPoints;
 
     const tripTime = new Date(end.time).getTime() - new Date(start.time[0]).getTime();
 
@@ -127,6 +140,8 @@ app.use(passport.initialize());
       tripUsedEnergy,
       maxSpeed,
       maxCurrent,
+      averageSpeed,
+      averageSpeedWhenMoving,
     };
   };
 
