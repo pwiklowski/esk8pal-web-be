@@ -160,7 +160,7 @@ app.use(passport.initialize());
     });
   };
 
-  const createRideLog = async (req: express.Request, res: express.Response, data: string) => {
+  const createRideLog = async (req: express.Request, res: express.Response, data: string, deviceId: string) => {
     const rideId = new mongo.ObjectID();
 
     const metaData = generateMetadata(await parseGpx(data));
@@ -173,6 +173,8 @@ app.use(passport.initialize());
       fileName: req.files.logfile.name,
       fileId: fileId,
       metaData,
+      uploaded: new Date(),
+      deviceId,
     };
 
     const response = await rides.insertOne(ride);
@@ -277,25 +279,33 @@ app.use(passport.initialize());
   app.post("/upload", async (req: express.Request, res: express.Response) => {
     const key = req.query.key;
 
-    if (key) {
+    console.log("upload", req.query);
+
+    if (key && req.files?.logfile) {
       const user = await users.findOne({ "devices.key": req.query.key });
+
+      const device = user.devices.find((device) => device.key === req.query.key);
 
       req.user = user;
 
-      const gpx = generateGpx(req.files.logfile.data);
-      await createRideLog(req, res, gpx);
+      try {
+        const gpx = generateGpx(req.files.logfile.data);
+        await createRideLog(req, res, gpx, device._id);
+      } catch {
+        res.sendStatus(500);
+      }
     } else {
       res.sendStatus(400);
     }
   });
 
-  app.post("/csv", passport.authenticate("bearer", { session: false }), async (req: express.Request, res: express.Response) => {
+  app.post("/:deviceId/csv", passport.authenticate("bearer", { session: false }), async (req: express.Request, res: express.Response) => {
     const gpx = generateGpx(req.files.logfile.data);
-    await createRideLog(req, res, gpx);
+    await createRideLog(req, res, gpx, req.params.deviceId);
   });
 
-  app.post("/gpx", passport.authenticate("bearer", { session: false }), async (req: express.Request, res: express.Response) => {
-    await createRideLog(req, res, req.files.logfile.data);
+  app.post("/:deviceId/gpx", passport.authenticate("bearer", { session: false }), async (req: express.Request, res: express.Response) => {
+    await createRideLog(req, res, req.files.logfile.data, req.params.deviceId);
   });
 
   app.post("/convert", async (req: express.Request, res: express.Response) => {

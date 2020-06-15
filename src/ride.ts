@@ -6,6 +6,8 @@ export default interface Ride {
   fileName: string;
   _id: ObjectId;
   metaData: MetaData;
+  uploaded: Date;
+  deviceId: string;
 }
 
 export interface MetaData {
