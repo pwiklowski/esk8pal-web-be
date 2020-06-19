@@ -235,6 +235,8 @@ app.use(passport.initialize());
         _id: true,
         fileName: true,
         metaData: true,
+        uploaded: true,
+        deviceId: true,
       })
       .toArray();
     res.json(allRides);
